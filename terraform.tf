@@ -20,10 +20,27 @@ terraform {
 # Default provider (Frankfurt)
 provider "aws" {
   region = "eu-central-1"
+
+  default_tags {
+    tags = {
+      Project   = "Cloud Resume Challenge"
+      ManagedBy = "Terraform"
+      Name      = "ElasticPurple"
+    }
+  }
 }
 
 # ACM + CloudFront provider (required region)
 provider "aws" {
-  alias  = "us-east-1"
+  alias  = "us_east_1"
   region = "us-east-1"
+
+  default_tags {
+    tags = {
+      Project   = "Cloud Resume Challenge"
+      ManagedBy = "Terraform"
+      Name      = "ElasticPurple"
+    }
+  }
+
 }

@@ -1,67 +1,34 @@
-import {
-  to = aws_s3_bucket.this
-  id = "elastic-purple-website-s3-bucket"
+
+
+module "visitor_counter" {
+  source = "./modules/visitor-counter"
+
+  function_name        = "cloudresume-counter-api"
+  lambda_role_name     = var.lambda_role_name
+  lambda_role_path     = "/service-role/"
+  dynamodb_table_name  = "cloudresume"
+  lambda_runtime       = var.lambda_runtime
+  lambda_handler       = var.lambda_handler
+  log_retention_days   = var.cloudwatch_log_retention_days
+  cors_allowed_origins = ["https://${var.domain_name}", "https://www.${var.domain_name}"]
+
+  tags = var.default_tags
 }
 
+module "website_frontend" {
+  source = "./modules/website-frontend"
 
-resource "aws_s3_bucket" "this" {
-  bucket = "elastic-purple-website-s3-bucket"
-}
-
-
-resource "aws_route53_record" "this" {
-  zone_id = "Z015596023ZJ41YNGKLQF"
-  name    = "elasticpurple.com"
-  type    = "A"
-
-  alias {
-    name                   = "d1vyjf65raehbn.cloudfront.net."
-    zone_id                = "Z015596023ZJ41YNGKLQF"
-    evaluate_target_health = false
-  }
-}
-
-
-resource "aws_cloudfront_distribution" "this" {
-  enabled = true
-
-  origin {
-    domain_name = "example.com"
-    origin_id   = "origin-1"
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
   }
 
-  default_cache_behavior {
-    target_origin_id       = "origin-1"
-    viewer_protocol_policy = "allow-all"
-    allowed_methods        = ["GET", "HEAD"]
-    cached_methods         = ["GET", "HEAD"]
-  }
+  domain_name            = var.domain_name
+  s3_bucket_name         = var.s3_bucket_name
+  cloudfront_price_class = "PriceClass_100"
+  acm_validation_method  = "DNS"
+  waf_enabled            = true
+  waf_web_acl_name       = var.waf_web_acl_name
 
-  restrictions {
-    geo_restriction {
-      restriction_type = "none"
-    }
-  }
-
-  viewer_certificate {
-    cloudfront_default_certificate = true
-  }
-}
-
-resource "aws_dynamodb_table" "this" {
-  name = "cloudresume"
-}
-
-resource "aws_acm_certificate" "this" {
-  domain_name       = "elasticpurple.com"
-  validation_method = "DNS"
-}
-
-resource "aws_lambda_function" "this" {
-  function_name = "cloudresume-counter-api"
-
-  # Temporary placeholders to satisfy validation
-  role    = "arn:aws:iam::000000000000:role/placeholder"
-  handler = "index.handler"
-  runtime = "nodejs18.x"
+  tags = var.default_tags
 }
